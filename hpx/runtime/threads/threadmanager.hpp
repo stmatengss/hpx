@@ -365,12 +365,6 @@ namespace hpx { namespace threads
             return get_thread_count(
                 terminated, thread_priority_default, std::size_t(-1), reset);
         }
-        std::int64_t get_thread_count_staged(bool reset)
-        {
-            return get_thread_count(
-                staged, thread_priority_default, std::size_t(-1), reset);
-        }
-
 #ifdef HPX_HAVE_THREAD_IDLE_RATES
         std::int64_t avg_idle_rate(bool reset);
 #ifdef HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES
@@ -396,9 +390,7 @@ namespace hpx { namespace threads
         std::int64_t get_num_pending_misses(bool reset);
         std::int64_t get_num_pending_accesses(bool reset);
         std::int64_t get_num_stolen_from_pending(bool reset);
-        std::int64_t get_num_stolen_from_staged(bool reset);
         std::int64_t get_num_stolen_to_pending(bool reset);
-        std::int64_t get_num_stolen_to_staged(bool reset);
 #endif
 
 private:

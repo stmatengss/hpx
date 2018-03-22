@@ -239,34 +239,6 @@ namespace hpx { namespace threads { namespace policies
             num_stolen_threads += queues_[num_thread]->get_num_stolen_to_pending(reset);
             return num_stolen_threads;
         }
-
-        std::int64_t get_num_stolen_from_staged(std::size_t num_thread, bool reset)
-        {
-            std::int64_t num_stolen_threads = 0;
-            if (num_thread == std::size_t(-1))
-            {
-                for (std::size_t i = 0; i != queues_.size(); ++i)
-                    num_stolen_threads += queues_[i]->get_num_stolen_from_staged(reset);
-                return num_stolen_threads;
-            }
-
-            num_stolen_threads += queues_[num_thread]->get_num_stolen_from_staged(reset);
-            return num_stolen_threads;
-        }
-
-        std::int64_t get_num_stolen_to_staged(std::size_t num_thread, bool reset)
-        {
-            std::int64_t num_stolen_threads = 0;
-            if (num_thread == std::size_t(-1))
-            {
-                for (std::size_t i = 0; i != queues_.size(); ++i)
-                    num_stolen_threads += queues_[i]->get_num_stolen_to_staged(reset);
-                return num_stolen_threads;
-            }
-
-            num_stolen_threads += queues_[num_thread]->get_num_stolen_to_staged(reset);
-            return num_stolen_threads;
-        }
 #endif
 
         ///////////////////////////////////////////////////////////////////////

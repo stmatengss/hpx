@@ -401,10 +401,6 @@ namespace hpx { namespace threads { namespace policies
             bool reset) = 0;
         virtual std::int64_t get_num_stolen_to_pending(std::size_t num_thread,
             bool reset) = 0;
-        virtual std::int64_t get_num_stolen_from_staged(std::size_t num_thread,
-            bool reset) = 0;
-        virtual std::int64_t get_num_stolen_to_staged(std::size_t num_thread,
-            bool reset) = 0;
 #endif
 
         virtual std::int64_t get_queue_length(

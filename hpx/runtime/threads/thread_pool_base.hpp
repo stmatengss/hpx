@@ -264,10 +264,6 @@ namespace hpx { namespace threads
             std::size_t thread_num, bool reset) { return 0; }
         virtual std::int64_t get_num_stolen_to_pending(
             std::size_t thread_num, bool reset) { return 0; }
-        virtual std::int64_t get_num_stolen_from_staged(
-            std::size_t thread_num, bool reset) { return 0; }
-        virtual std::int64_t get_num_stolen_to_staged(
-            std::size_t thread_num, bool reset) { return 0; }
 #endif
 
         virtual std::int64_t get_thread_count(thread_state_enum state,
@@ -304,11 +300,6 @@ namespace hpx { namespace threads
         {
             return get_thread_count(
                 terminated, thread_priority_default, num_thread, reset);
-        }
-        std::int64_t get_thread_count_staged(std::size_t num_thread, bool reset)
-        {
-            return get_thread_count(
-                staged, thread_priority_default, num_thread, reset);
         }
 
         virtual std::int64_t get_scheduler_utilization() const = 0;

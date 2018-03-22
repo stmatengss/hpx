@@ -356,9 +356,6 @@ namespace threads {
                 std::int64_t num_stolen_threads = 0;
                 if (pool_queue_num == std::size_t(-1))
                 {
-                    //                num_stolen_threads += high_priority_queue_.
-                    //                    get_num_stolen_to_pending(reset);
-
                     for (std::size_t i = 0; i != queues_.size(); ++i)
                         num_stolen_threads +=
                             queues_[i]->get_num_stolen_to_pending(reset);
@@ -372,79 +369,10 @@ namespace threads {
                 num_stolen_threads +=
                     queues_[pool_queue_num]->get_num_stolen_to_pending(reset);
 
-                //            num_stolen_threads += high_priority_queue_.
-                //                get_num_stolen_to_pending(reset);
-
                 if (pool_queue_num == 0)
                 {
                     num_stolen_threads +=
                         low_priority_queue_.get_num_stolen_to_pending(reset);
-                }
-                return num_stolen_threads;
-            }
-
-            std::int64_t get_num_stolen_from_staged(
-                std::size_t pool_queue_num, bool reset)
-            {
-                std::int64_t num_stolen_threads = 0;
-                if (pool_queue_num == std::size_t(-1))
-                {
-                    //                num_stolen_threads += high_priority_queue_.
-                    //                    get_num_stolen_from_staged(reset);
-
-                    for (std::size_t i = 0; i != queues_.size(); ++i)
-                        num_stolen_threads +=
-                            queues_[i]->get_num_stolen_from_staged(reset);
-
-                    num_stolen_threads +=
-                        low_priority_queue_.get_num_stolen_from_staged(reset);
-
-                    return num_stolen_threads;
-                }
-
-                num_stolen_threads +=
-                    queues_[pool_queue_num]->get_num_stolen_from_staged(reset);
-
-                //            num_stolen_threads += high_priority_queue_.
-                //                get_num_stolen_from_staged(reset);
-
-                if (pool_queue_num == 0)
-                {
-                    num_stolen_threads +=
-                        low_priority_queue_.get_num_stolen_from_staged(reset);
-                }
-                return num_stolen_threads;
-            }
-
-            std::int64_t get_num_stolen_to_staged(
-                std::size_t pool_queue_num, bool reset)
-            {
-                std::int64_t num_stolen_threads = 0;
-                if (pool_queue_num == std::size_t(-1))
-                {
-                    //                num_stolen_threads += high_priority_queue_.
-                    //                    get_num_stolen_to_staged(reset);
-
-                    for (std::size_t i = 0; i != queues_.size(); ++i)
-                        num_stolen_threads +=
-                            queues_[i]->get_num_stolen_to_staged(reset);
-
-                    num_stolen_threads +=
-                        low_priority_queue_.get_num_stolen_to_staged(reset);
-
-                    return num_stolen_threads;
-                }
-
-                num_stolen_threads +=
-                    queues_[pool_queue_num]->get_num_stolen_to_staged(reset);
-
-                //            num_stolen_threads += high_priority_queue_.
-                //                get_num_stolen_to_staged(reset);
-
-                if (pool_queue_num == 0)
-                {
-                    num_stolen_threads +=
-                        low_priority_queue_.get_num_stolen_to_staged(reset);
                 }
                 return num_stolen_threads;
             }
@@ -734,20 +662,6 @@ namespace threads {
                     }
                     // counter for misses
                     this_queue->increment_num_pending_misses();
-
-                    bool have_staged = this_queue->get_staged_queue_length(
-                                           std::memory_order_relaxed) != 0;
-
-                    // Give up, we should have work to convert.
-                    if (have_staged)
-                    {
-                        LOG_CUSTOM_MSG("get_next_thread have_staged"
-                            << "\" (unset) "
-                            << "\" " << hexpointer(thrd)
-                            << decnumber(idle_loop_count) << "pool_queue_num "
-                            << decnumber(pool_queue_num));
-                        return false;
-                    }
                 }
 
                 // if we didn't get a task from the requested thread queue

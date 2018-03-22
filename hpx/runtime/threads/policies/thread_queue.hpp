@@ -70,14 +70,6 @@ namespace hpx { namespace threads { namespace policies
             return min_tasks_to_steal_pending;
         }
 
-        inline int get_min_tasks_to_steal_staged()
-        {
-            static int min_tasks_to_steal_staged =
-                boost::lexical_cast<int>(hpx::get_config_entry(
-                    "hpx.thread_queue.min_tasks_to_steal_staged", "10"));
-            return min_tasks_to_steal_staged;
-        }
-
         inline int get_min_add_new_count()
         {
             static int min_add_new_count =
@@ -155,7 +147,6 @@ namespace hpx { namespace threads { namespace policies
 
         // don't steal if less than this amount of tasks are left
         int const min_tasks_to_steal_pending;
-        int const min_tasks_to_steal_staged;
 
         // create at least this amount of threads from tasks
         int const min_add_new_count;
@@ -302,92 +293,6 @@ namespace hpx { namespace threads { namespace policies
             return 0;
         }
 
-//        ///////////////////////////////////////////////////////////////////////
-//        // add new threads if there is some amount of work available
-//        std::size_t add_new(std::int64_t add_count, thread_queue* addfrom,
-//            std::unique_lock<mutex_type> &lk, bool steal = false)
-//        {
-//            HPX_ASSERT(lk.owns_lock());
-
-//            if (HPX_UNLIKELY(0 == add_count))
-//                return 0;
-
-//            std::size_t added = 0;
-//            task_description* task = nullptr;
-//            while (add_count-- && addfrom->new_tasks_.pop(task, steal))
-//            {
-//#ifdef HPX_HAVE_THREAD_QUEUE_WAITTIME
-//                if (maintain_queue_wait_times) {
-//                    addfrom->new_tasks_wait_ +=
-//                        util::high_resolution_clock::now() - util::get<2>(*task);
-//                    ++addfrom->new_tasks_wait_count_;
-//                }
-//#endif
-//                --addfrom->new_tasks_count_;
-
-//                // measure thread creation time
-//                util::block_profiler_wrapper<add_new_tag> bp(add_new_logger_);
-
-//                // create the new thread
-//                threads::thread_init_data& data = util::get<0>(*task);
-//                thread_state_enum state = util::get<1>(*task);
-//                threads::thread_id_type thrd;
-
-//                create_thread_object(thrd, data, state, lk);
-
-//                delete task;
-
-//                added += add_to_thread_map(thrd, lk, state);
-
-//            }
-//            if (added>0) {
-//              LTM_(debug) << "add_new: added " << added << " tasks to queues"; //-V128
-//            }
-//            return added;
-//        }
-
-        ///////////////////////////////////////////////////////////////////////
-        bool add_new_always(std::size_t& added, thread_queue* addfrom,
-            std::unique_lock<mutex_type> &lk, bool steal = false)
-        {
-            HPX_ASSERT(lk.owns_lock());
-
-#ifdef HPX_HAVE_THREAD_CREATION_AND_CLEANUP_RATES
-            util::tick_counter tc(add_new_time_);
-#endif
-
-            // create new threads from pending tasks (if appropriate)
-            std::int64_t add_count = -1;            // default is no constraint
-
-            // if we are desperate (no work in the queues), add some even if the
-            // map holds more than max_count
-            if (HPX_LIKELY(max_count_)) {
-                std::size_t count = thread_map_.size();
-                if (max_count_ >= count + min_add_new_count) { //-V104
-                    HPX_ASSERT(max_count_ - count <
-                        static_cast<std::size_t>(
-                            (std::numeric_limits<std::int64_t>::max)()
-                        ));
-                    add_count = static_cast<std::int64_t>(max_count_ - count);
-                    if (add_count < min_add_new_count)
-                        add_count = min_add_new_count;
-                    if (add_count > max_add_new_count)
-                        add_count = max_add_new_count;
-                }
-                else if (work_items_.empty()) {
-                    add_count = min_add_new_count;    // add this number of threads
-                    max_count_ += min_add_new_count;  // increase max_count //-V101
-                }
-                else {
-                    return false;
-                }
-            }
-
-            std::size_t addednew = add_new(add_count, addfrom, lk, steal);
-            added += addednew;
-            return addednew != 0;
-        }
-
         void recycle_thread(thread_id_type thrd)
         {
             std::ptrdiff_t stacksize = thrd->get_stack_size();
@@ -532,7 +437,6 @@ namespace hpx { namespace threads { namespace policies
         thread_queue(std::size_t queue_num = std::size_t(-1),
                 std::size_t max_count = max_thread_count)
           : min_tasks_to_steal_pending(detail::get_min_tasks_to_steal_pending()),
-            min_tasks_to_steal_staged(detail::get_min_tasks_to_steal_staged()),
             min_add_new_count(detail::get_min_add_new_count()),
             max_add_new_count(detail::get_max_add_new_count()),
             max_delete_count(detail::get_max_delete_count()),
@@ -561,9 +465,7 @@ namespace hpx { namespace threads { namespace policies
             pending_misses_(0),
             pending_accesses_(0),
             stolen_from_pending_(0),
-            stolen_from_staged_(0),
             stolen_to_pending_(0),
-            stolen_to_staged_(0),
 #endif
             add_new_logger_("thread_queue::add_new")
         {}
@@ -613,13 +515,6 @@ namespace hpx { namespace threads { namespace policies
             return work_items_count_;
         }
 
-        // This returns the current length of the staged queue
-        std::int64_t get_staged_queue_length(
-            std::memory_order order = std::memory_order_seq_cst) const
-        {
-            return 0;
-        }
-
 #ifdef HPX_HAVE_THREAD_STEALING_COUNTS
         std::int64_t get_num_pending_misses(bool reset)
         {
@@ -651,16 +546,6 @@ namespace hpx { namespace threads { namespace policies
             stolen_from_pending_ += num;
         }
 
-        std::int64_t get_num_stolen_from_staged(bool reset)
-        {
-            return util::get_and_reset_value(stolen_from_staged_, reset);
-        }
-
-        void increment_num_stolen_from_staged(std::size_t num = 1)
-        {
-            stolen_from_staged_ += num;
-        }
-
         std::int64_t get_num_stolen_to_pending(bool reset)
         {
             return util::get_and_reset_value(stolen_to_pending_, reset);
@@ -670,23 +555,11 @@ namespace hpx { namespace threads { namespace policies
         {
             stolen_to_pending_ += num;
         }
-
-        std::int64_t get_num_stolen_to_staged(bool reset)
-        {
-            return util::get_and_reset_value(stolen_to_staged_, reset);
-        }
-
-        void increment_num_stolen_to_staged(std::size_t num = 1)
-        {
-            stolen_to_staged_ += num;
-        }
 #else
         void increment_num_pending_misses(std::size_t num = 1) {}
         void increment_num_pending_accesses(std::size_t num = 1) {}
         void increment_num_stolen_from_pending(std::size_t num = 1) {}
-        void increment_num_stolen_from_staged(std::size_t num = 1) {}
         void increment_num_stolen_to_pending(std::size_t num = 1) {}
-        void increment_num_stolen_to_staged(std::size_t num = 1) {}
 #endif
 
         ///////////////////////////////////////////////////////////////////////
@@ -815,9 +688,6 @@ namespace hpx { namespace threads { namespace policies
             if (terminated == state)
                 return terminated_items_count_;
 
-//            if (staged == state)
-//                return new_tasks_count_;
-
             if (unknown == state)
                 return thread_map_count_ - terminated_items_count_;
 
@@ -859,13 +729,6 @@ namespace hpx { namespace threads { namespace policies
             if (state == terminated)
             {
                 count = terminated_items_count_;
-            }
-            else if (state == staged)
-            {
-                HPX_THROW_EXCEPTION(bad_parameter,
-                    "thread_queue::iterate_threads",
-                    "can't iterate over thread ids of staged threads");
-                return false;
             }
 
             std::vector<thread_id_type> ids;
@@ -969,12 +832,8 @@ namespace hpx { namespace threads { namespace policies
 
         std::atomic<std::int64_t> stolen_from_pending_;
         ///< count of work_items stolen from this queue
-        std::atomic<std::int64_t> stolen_from_staged_;
-        ///< count of new_tasks stolen from this queue
         std::atomic<std::int64_t> stolen_to_pending_;
         ///< count of work_items stolen to this queue from other queues
-        std::atomic<std::int64_t> stolen_to_staged_;
-        ///< count of new_tasks stolen to this queue from other queues
 #endif
 
         util::block_profiler<add_new_tag> add_new_logger_;

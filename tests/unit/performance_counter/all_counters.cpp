@@ -19,7 +19,6 @@ char const* const locality_pool_thread_counter_names[] =
     "/threadqueue/length",
 #ifdef HPX_HAVE_THREAD_QUEUE_WAITTIME
     "/threads/wait-time/pending",
-    "/threads/wait-time/staged",
 #endif
 #ifdef HPX_HAVE_THREAD_IDLE_RATES
     "/threads/idle-rate",
@@ -34,7 +33,6 @@ char const* const locality_pool_thread_counter_names[] =
     "/threads/count/instantaneous/pending",
     "/threads/count/instantaneous/suspended",
     "/threads/count/instantaneous/terminated",
-    "/threads/count/instantaneous/staged",
 #ifdef HPX_HAVE_THREAD_CUMULATIVE_COUNTS
     "/threads/count/cumulative",
     "/threads/count/cumulative-phases",
@@ -51,9 +49,7 @@ char const* const locality_pool_thread_counter_names[] =
     "/threads/count/pending-misses",
     "/threads/count/pending-accesses",
     "/threads/count/stolen-from-pending",
-    "/threads/count/stolen-from-staged",
     "/threads/count/stolen-to-pending",
-    "/threads/count/stolen-to-staged",
 #endif
     nullptr
 };

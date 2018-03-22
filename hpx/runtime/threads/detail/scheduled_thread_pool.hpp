@@ -195,16 +195,6 @@ namespace hpx { namespace threads { namespace detail
         {
             return sched_->Scheduler::get_num_stolen_to_pending(num, reset);
         }
-
-        std::int64_t get_num_stolen_from_staged(std::size_t num, bool reset)
-        {
-            return sched_->Scheduler::get_num_stolen_from_staged(num, reset);
-        }
-
-        std::int64_t get_num_stolen_to_staged(std::size_t num, bool reset)
-        {
-            return sched_->Scheduler::get_num_stolen_to_staged(num, reset);
-        }
 #endif
         std::int64_t get_queue_length(std::size_t num_thread, bool reset)
         {

@@ -179,7 +179,6 @@ namespace hpx { namespace threads
         "suspended",
         "depleted",
         "terminated",
-        "staged",
         "pending_do_not_schedule",
         "pending_boost"
         };
@@ -187,7 +186,7 @@ namespace hpx { namespace threads
 
     char const* get_thread_state_name(thread_state_enum state)
     {
-        if (state < unknown || state > staged)
+        if (state < unknown || state > terminated)
             return "unknown";
         return strings::thread_state_names[state];
     }
@@ -971,27 +970,11 @@ namespace hpx { namespace threads
         return result;
     }
 
-    std::int64_t threadmanager::get_num_stolen_from_staged(bool reset)
-    {
-        std::int64_t result = 0;
-        for (auto const& pool_iter : pools_)
-            result += pool_iter->get_num_stolen_from_staged(all_threads, reset);
-        return result;
-    }
-
     std::int64_t threadmanager::get_num_stolen_to_pending(bool reset)
     {
         std::int64_t result = 0;
         for (auto const& pool_iter : pools_)
             result += pool_iter->get_num_stolen_to_pending(all_threads, reset);
-        return result;
-    }
-
-    std::int64_t threadmanager::get_num_stolen_to_staged(bool reset)
-    {
-        std::int64_t result = 0;
-        for (auto const& pool_iter : pools_)
-            result += pool_iter->get_num_stolen_to_staged(all_threads, reset);
         return result;
     }
 #endif
@@ -1376,16 +1359,6 @@ namespace hpx { namespace threads
                     &thread_pool_base::get_average_thread_wait_time),
                 &performance_counters::locality_pool_thread_counter_discoverer,
                 "ns"},
-            // average task wait time for queue(s)
-            {"/threads/wait-time/staged", performance_counters::counter_raw,
-                "returns the average wait time of staged threads (task "
-                "descriptions) for the referenced queue",
-                HPX_PERFORMANCE_COUNTER_V1,
-                util::bind_front(&threadmanager::queue_wait_time_counter_creator,
-                    this, &threadmanager::get_average_task_wait_time,
-                    &thread_pool_base::get_average_task_wait_time),
-                &performance_counters::locality_pool_thread_counter_discoverer,
-                "ns"},
 #endif
 #ifdef HPX_HAVE_THREAD_IDLE_RATES
             // idle rate
@@ -1553,17 +1526,6 @@ namespace hpx { namespace threads
                     &thread_pool_base::get_thread_count_terminated),
                 &performance_counters::locality_pool_thread_counter_discoverer,
                 ""},
-            {"/threads/count/instantaneous/staged",
-                performance_counters::counter_raw,
-                "returns the current number of staged HPX-threads (task "
-                "descriptions) "
-                "at the referenced locality",
-                HPX_PERFORMANCE_COUNTER_V1,
-                util::bind_front(&threadmanager::locality_pool_thread_counter_creator,
-                    this, &threadmanager::get_thread_count_staged,
-                    &thread_pool_base::get_thread_count_staged),
-                &performance_counters::locality_pool_thread_counter_discoverer,
-                ""},
             {"/threads/count/stack-recycles", performance_counters::counter_raw,
                 "returns the total number of HPX-thread recycling operations "
                 "performed for the referenced locality",
@@ -1614,17 +1576,6 @@ namespace hpx { namespace threads
                     &thread_pool_base::get_num_stolen_from_pending),
                 &performance_counters::locality_pool_thread_counter_discoverer,
                 ""},
-            {"/threads/count/stolen-from-staged",
-                performance_counters::counter_raw,
-                "returns the overall number of task descriptions stolen by "
-                "neighboring"
-                "schedulers from this scheduler for the referenced locality",
-                HPX_PERFORMANCE_COUNTER_V1,
-                util::bind_front(&threadmanager::locality_pool_thread_counter_creator,
-                    this, &threadmanager::get_num_stolen_from_staged,
-                    &thread_pool_base::get_num_stolen_from_staged),
-                &performance_counters::locality_pool_thread_counter_discoverer,
-                ""},
             {"/threads/count/stolen-to-pending",
                 performance_counters::counter_raw,
                 "returns the overall number of pending HPX-threads stolen from "
@@ -1634,17 +1585,6 @@ namespace hpx { namespace threads
                 util::bind_front(&threadmanager::locality_pool_thread_counter_creator,
                     this, &threadmanager::get_num_stolen_to_pending,
                     &thread_pool_base::get_num_stolen_to_pending),
-                &performance_counters::locality_pool_thread_counter_discoverer,
-                ""},
-            {"/threads/count/stolen-to-staged",
-                performance_counters::counter_raw,
-                "returns the overall number of task descriptions stolen from "
-                "neighboring"
-                "schedulers for the referenced locality",
-                HPX_PERFORMANCE_COUNTER_V1,
-                util::bind_front(&threadmanager::locality_pool_thread_counter_creator,
-                    this, &threadmanager::get_num_stolen_to_staged,
-                    &thread_pool_base::get_num_stolen_to_staged),
                 &performance_counters::locality_pool_thread_counter_discoverer,
                 ""},
 #endif
