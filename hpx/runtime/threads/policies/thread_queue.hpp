@@ -146,7 +146,6 @@ namespace hpx { namespace threads { namespace policies
     // };
     template <typename Mutex = compat::mutex,
         typename PendingQueuing = lockfree_lifo,
-        typename StagedQueuing = lockfree_lifo,
         typename TerminatedQueuing = lockfree_fifo>
     class thread_queue
     {
@@ -189,9 +188,6 @@ namespace hpx { namespace threads { namespace policies
 
         typedef typename PendingQueuing::template
             apply<thread_description*>::type work_items_type;
-
-        typedef typename StagedQueuing::template
-            apply<task_description*>::type task_items_type;
 
         typedef typename TerminatedQueuing::template
             apply<thread_data*>::type terminated_items_type;
